@@ -28,4 +28,4 @@ export const modelsMap = {
     ShoppingCart,
     shoppingCartHistory
     
-}
+} 

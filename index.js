@@ -1,7 +1,7 @@
 import connectDB from "./db/index.js";
 import dotenv from 'dotenv';
 import { createClient,  } from 'redis';
-import { creation } from "./src/index.js";
+import { creation, ifexists, ifexistsById } from "./src/index.js";
 
 dotenv.config({
     path: './env'
@@ -9,13 +9,12 @@ dotenv.config({
 connectDB();
 
 
-const client = createClient();
+const client = createClient({
+	url:"redis://redis:6379"}); 
 
 async function DBPickup() {
-    // await client.connect();
-    try {
+      try {
         await client.connect();
-        // console.log(client)
         console.log("\n DB ALPHA IS Connected to the Q");
         while (true) {
             console.log("again waiting for the data")
@@ -25,22 +24,27 @@ async function DBPickup() {
             console.log(`\n DB ALPHA is processing the data: ${data}`);
 
 
-            try {
+            try { 
                 let result;
                 switch (data.Action) {
                     case "CREATE":
                         result = await creation(data);
                         break;
+                    case "FINDONE":
+                        result  = await ifexists(data);
+                        break;
+                    case "FINDBYID":
+                        result  = await ifexistsById(data);
+                        break;
                     default:
                         console.log("Invalid action");
                         result = "Invalid action";
-                        throw error("Invalid action");
                         break;
                 }
                 const operationId = data.operationId
 
 
-                console.log(`\n DB ALPHA has processed the data: ${JSON.stringify(data)}`);
+                console.log(`\n DB ALPHA has processed the data: ${JSON.stringify(data)}`); 
                 client.lPush('Results', JSON.stringify({ operationId, result }));
             } catch (error) {
                 console.error('Error processing the data', error);
